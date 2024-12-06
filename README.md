@@ -1,5 +1,7 @@
 # Darts Scoore Calculator
 
+![screenshot](darts.png)
+
 ## Project setup
 ```
 npm install
