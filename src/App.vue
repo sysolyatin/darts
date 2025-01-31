@@ -176,6 +176,14 @@ export default {
                 return;
             }
             if (player.scoore < totalSum) {
+                this.results.push({
+                    time: Date.now(),
+                    name: player.name, 
+                    shot1: 0, 
+                    shot2: 0, 
+                    shot3: 0, 
+                    total: 0
+                });
                 this.nextPlayer();
                 return;
             }
@@ -195,9 +203,17 @@ export default {
         playerWin() {
             let player = this.players.find(a => a.id == this.currentPlayerId);
             this.winner = player.name;
+        },
+        handleKeyDown(event) {
+            event.preventDefault();
+            if (event.code === 'Space' || event.key === ' ') {
+                this.finishMove();
+            }
         }
     },
     mounted: function() {
+        window.addEventListener('keydown', this.handleKeyDown);
+
         // Load saved game
         let historyNamesData = localStorage.getItem('historyNames');
         this.historyNames = historyNamesData ? JSON.parse(historyNamesData) : [];
@@ -220,6 +236,7 @@ export default {
         this.results = JSON.parse(resultsData);
     }
 }
+
 </script>
 
 <style scoped>
@@ -233,7 +250,7 @@ export default {
 }
 .currentPlayerScoore {
     text-align: center;
-    font-size: 250px;
+    font-size: 220px;
     font-weight: bold;
 }
 .currentPlayerScoore span {

@@ -5,22 +5,32 @@
         <button class="btn btn-dark btn-lg me-5" @click="newGame">Новая игра</button>
         <button class="btn btn-dark btn-lg" @click="newGameSavePlayers">Такая же игра</button>
 
-        <div class="winners mt-5" v-if="winners.length > 0">
-            <h3>История победителей:</h3>
-            <table class="table">
-                <tr v-for="winner in winners.sort((a, b) => a.time < b.time ? 1 : -1)">
-                    <td>{{ getDateString(winner.time) }}</td>
-                    <td>{{ winner.name }}</td>
-                </tr>
-            </table>
+
+        <div class="row mt-5" v-if="winners.length > 0">
+            <div class="col-md-4 text-start">
+                <h3>История победителей:</h3>
+                <table class="table">
+                    <tr v-for="winner in winners.sort((a, b) => a.time < b.time ? 1 : -1)">
+                        <td>{{ getDateString(winner.time) }}</td>
+                        <td>{{ winner.name }}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-8">
+                <BarChart :chartData="chartData" :chartOptions="chartOptions" />
+            </div>
         </div>
 
-        
     </div>
 </template>
   
 <script>
+import BarChart from './BarChart.vue';
+
 export default {
+    components: {
+        BarChart,
+    },
     name: 'WinMessage',
     props: {
         name: String
@@ -28,6 +38,28 @@ export default {
     data() {
         return {
             winners: [],
+            chartData: {},
+            chartOptions: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: 'white',
+                        },
+                    },
+                    y: {
+                        ticks: {
+                            color: 'white',
+                        },
+                        beginAtZero: true,
+                    },
+                },
+            },
         }
     },
     methods: {
@@ -64,6 +96,34 @@ export default {
         this.winners = winnersData ? JSON.parse(winnersData) : [];
         this.winners.push({time: Date.now(), name: this.name});
         localStorage.setItem('winners', JSON.stringify(this.winners));
+
+        let winStats = {};
+        for (let i = 0; i < this.winners.length; i++) {
+            let winner = this.winners[i];
+            let winnerStat = winStats[winner.name];
+            winStats[winner.name] = winnerStat ? winnerStat + 1 : 1
+        }
+
+        let labels = [];
+        let chartData = [];
+
+        for (var statPlayerName in winStats) {
+            labels.push(statPlayerName);
+            chartData.push(winStats[statPlayerName]);
+        }
+
+        this.chartData = {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Победы',
+                    data: chartData,
+                    backgroundColor: 'rgba(255, 193, 7, 1)',
+                    borderColor: 'rgba(255, 255, 255, 1)',
+                    borderWidth: 0,
+                },
+            ],
+        }
     }
 }
 </script>
@@ -71,11 +131,7 @@ export default {
 <style scoped>
 .win {
     width: 100%;
-    height: 100vh;
-}
-.winners {
-    text-align: left;
-    max-width: 400px;
+    min-height: 100vh;
 }
 </style>
   
