@@ -1,7 +1,7 @@
 <template>
     <WinMessage :name="winner" @newGame="newGame" v-if="winner !== ''" />
 
-    <NewGame v-if="players.length === 0 && winner === ''" @startGame="startGame"/>
+    <NewGame v-if="players.length === 0 && winner === ''" @startGame="startGame" :historyNames="historyNames"/>
 
     <div class="container-fluid" v-if="players.length !== 0 && winner === ''">
         <div class="tablo p-2">
@@ -22,6 +22,29 @@
             </div>
             <button class="btn btn-success btn-lg me-2" @click="finishMove">Завершить ход</button>  
             <button class="btn btn-warning btn-lg" @click="clearShots">Ввести ещё раз</button>
+
+            <div class="currentPlayerScoore">{{ players[currentPlayerId].scoore }} <span>{{ players[currentPlayerId].scoore - totalSum }}</span></div>
+
+        
+            <table class="table table-hover" v-if="results.length > 0">
+                <thead>
+                    <tr>
+                        <th>Имя игрока</th>
+                        <th>1</th>
+                        <th>2</th>
+                        <th>3</th>
+                        <th>Итого</th>
+                    </tr>
+                </thead>
+                <tr v-for="res in results.sort((a, b) => a.time < b.time ? 1 : -1)">
+                    <td>{{ res.name }}</td>
+                    <td>{{ res.shot1 }}</td>
+                    <td>{{ res.shot2 }}</td>
+                    <td>{{ res.shot3 }}</td>
+                    <td>{{ res.total }}</td>
+                </tr>
+
+            </table>
         </div>
         <div class="target">
             <Target @shot="processShot"/>
@@ -55,7 +78,9 @@ export default {
             shot3: 0,
             totalSum: 0,
             currentShotNumber: 1,
-            winner: ""
+            winner: "",
+            results: [],
+            historyNames: []
         }
     },
     methods: {
@@ -89,25 +114,38 @@ export default {
         startGame(gameType, playersNames){
             for (let i = 0; i < playersNames.length; i++) {
                 let playerName = playersNames[i];
+                if (!this.historyNames.find(a => a === playerName)) {
+                    this.historyNames.push(playerName);
+                }
+                this.gameMode = gameType;
                 this.players.push({
                     id: i,
                     name: playerName,
                     scoore: gameType
                 });
             }
+            this.results = [];
             this.saveGame();
         },
         saveGame() {
             localStorage.setItem('gameMode', `${this.gameMode}`);
             localStorage.setItem('currentPlayerId', `${this.currentPlayerId}`);
             localStorage.setItem('players', JSON.stringify(this.players));
+            localStorage.setItem('results', JSON.stringify(this.results));
+            localStorage.setItem('historyNames', JSON.stringify(this.historyNames));
         },
         newGame(clearPlayesAndMode) {
             this.winner = "";
+            this.shot1 = 0;
+            this.shot2 = 0;
+            this.shot3 = 0;
+            this.totalSum = 0;
+            this.results = [];
             if (clearPlayesAndMode) {
                 localStorage.removeItem('gameMode');
                 localStorage.removeItem('currentPlayerId');
                 localStorage.removeItem('players');
+                localStorage.removeItem('results');
                 this.gameMode = 0;
                 this.currentPlayerId = 0;
                 this.players = [];
@@ -126,6 +164,14 @@ export default {
             let player = this.players.find(a => a.id == this.currentPlayerId);
             if (player.scoore > totalSum) {
                 player.scoore -= totalSum;
+                this.results.push({
+                    time: Date.now(),
+                    name: player.name, 
+                    shot1: this.shot1, 
+                    shot2: this.shot2, 
+                    shot3: this.shot3, 
+                    total: totalSum
+                });
                 this.nextPlayer();
                 return;
             }
@@ -153,18 +199,25 @@ export default {
     },
     mounted: function() {
         // Load saved game
+        let historyNamesData = localStorage.getItem('historyNames');
+        this.historyNames = historyNamesData ? JSON.parse(historyNamesData) : [];
+
         let gameModeData = localStorage.getItem('gameMode');
         let currentPlayerIdData = localStorage.getItem('currentPlayerId');
         let playersData = localStorage.getItem('players');
-        if (!gameModeData || !currentPlayerIdData || !playersData) {
+        let resultsData = localStorage.getItem('results');
+        
+        if (!gameModeData || !currentPlayerIdData || !playersData || !resultsData) {
             this.gameMode = 501;
             this.currentPlayerId = 0;
             this.players = [];
+            this.results = [];
             return;
         }
         this.gameMode = Number(gameModeData);
         this.currentPlayerId = Number(currentPlayerIdData);
         this.players = JSON.parse(playersData);
+        this.results = JSON.parse(resultsData);
     }
 }
 </script>
@@ -177,5 +230,13 @@ export default {
 .shot {
     float: left;
     width: 1020px;
+}
+.currentPlayerScoore {
+    text-align: center;
+    font-size: 250px;
+    font-weight: bold;
+}
+.currentPlayerScoore span {
+    color: #888;
 }
 </style>

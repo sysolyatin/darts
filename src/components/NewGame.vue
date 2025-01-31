@@ -27,12 +27,22 @@
             <label>Имя четвертого игрока</label>
         </div>
         <button class="btn btn-success" @click="startGame">Начать игру</button>
+
+        <div class="historyNames mt-5">
+            <button class="btn btn-sm btn-outline-success me-2" v-for="name in historyNames" @click="setName(name)">{{ name }}</button>
+        </div>
     </div>
+
+    
+
 </template>
   
 <script>
 export default {
     name: 'NewGame',
+    props: {
+        historyNames: Object
+    },
     data() {
         return {
             gameType: 301,
@@ -56,6 +66,21 @@ export default {
         },
         changeGameType(e) {
             this.gameType = Number(e.target.value);
+        }, 
+        setName(name) {
+            if (this.playerName1 === "") {
+                this.playerName1 = name;
+                return;
+            }
+            if (this.playerName2 === "") {
+                this.playerName2 = name;
+                return;
+            }
+            if (this.playerName3 === "") {
+                this.playerName3 = name;
+                return;
+            }
+            this.playerName4 = name;
         }
     }
 }
