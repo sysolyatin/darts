@@ -205,8 +205,8 @@ export default {
             this.winner = player.name;
         },
         handleKeyDown(event) {
-            event.preventDefault();
             if (event.code === 'Space' || event.key === ' ') {
+                event.preventDefault();
                 this.finishMove();
             }
         }
